@@ -368,9 +368,19 @@ async function callClaude(prompt, maxTokens) {
 
 function parseJ(raw) {
   const c = raw.replace(/```json/g,'').replace(/```/g,'').trim();
-  const a = c.match(/\[[\s\S]*\]/); if(a) return JSON.parse(a[0]);
-  const o = c.match(/\{[\s\S]*\}/); if(o) return JSON.parse(o[0]);
-  return JSON.parse(c);
+  // 첫 번째 [ 또는 { 찾기
+  const arrStart = c.indexOf('[');
+  const objStart = c.indexOf('{');
+  let start = -1, end = -1, isArr = false;
+  if (arrStart !== -1 && (objStart === -1 || arrStart < objStart)) {
+    start = arrStart; isArr = true;
+  } else if (objStart !== -1) {
+    start = objStart; isArr = false;
+  }
+  if (start === -1) throw new Error('No JSON found');
+  end = isArr ? c.lastIndexOf(']') : c.lastIndexOf('}');
+  if (end === -1) throw new Error('JSON not closed');
+  return JSON.parse(c.slice(start, end + 1));
 }
 
 // Samples
