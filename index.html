@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Curriculum Craft</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: #faf7f2; color: #1a1a2e; min-height: 100vh; }
+
+header { background: #1a1a2e; padding: 18px 32px; }
+.logo { font-family: 'Fraunces', serif; font-size: 22px; color: #c9a84c; }
+.logo span { color: white; font-weight: 400; }
+.tagline { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+.progress { display: flex; background: #f0ebe0; border-bottom: 1px solid #d4cfc4; padding: 0 32px; overflow-x: auto; }
+.ps { display: flex; align-items: center; gap: 8px; padding: 14px 16px; font-size: 13px; color: #888; white-space: nowrap; border-bottom: 2px solid transparent; }
+.ps.active { color: #1a1a2e; border-bottom-color: #c9a84c; }
+.ps.done { color: #4a7c59; }
+.ps-num { width: 22px; height: 22px; border-radius: 50%; background: #d4cfc4; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
+.ps.active .ps-num { background: #c9a84c; color: white; }
+.ps.done .ps-num { background: #4a7c59; color: white; }
+.arr { color: #ccc; padding: 0 4px; line-height: 48px; }
+
+.wrap { max-width: 800px; margin: 0 auto; padding: 40px 20px 80px; }
+
+.card { background: white; border: 1px solid #d4cfc4; border-radius: 16px; padding: 32px; box-shadow: 0 4px 20px rgba(0,0,0,0.07); display: none; }
+.card.show { display: block; animation: up 0.3s ease; }
+@keyframes up { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+h2 { font-family: 'Fraunces', serif; font-size: 26px; margin-bottom: 8px; }
+.desc { color: #888; font-size: 14px; line-height: 1.6; margin-bottom: 24px; }
+
+.dropzone { border: 2px dashed #d4cfc4; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; background: #faf7f2; transition: border-color 0.2s; margin-bottom: 16px; }
+.dropzone:hover { border-color: #c9a84c; }
+.dropzone .icon { font-size: 36px; }
+.dropzone p { font-size: 15px; font-weight: 600; margin: 8px 0 4px; }
+.dropzone small { color: #888; font-size: 13px; }
+
+.file-ok { display: none; background: #d4e6da; border: 1px solid #4a7c59; border-radius: 8px; padding: 10px 16px; font-size: 14px; color: #2e5a3a; margin-bottom: 16px; gap: 8px; align-items: center; }
+.file-ok.show { display: flex; }
+
+.div { display: flex; align-items: center; gap: 12px; color: #888; font-size: 13px; margin: 16px 0; }
+.div::before, .div::after { content:''; flex:1; height:1px; background:#d4cfc4; }
+
+textarea { width: 100%; min-height: 150px; border: 1px solid #d4cfc4; border-radius: 10px; padding: 14px 16px; font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.6; background: #faf7f2; resize: vertical; }
+textarea:focus { outline: none; border-color: #c9a84c; }
+
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+label { font-size: 13px; font-weight: 600; }
+input[type=text], input[type=number], select { border: 1px solid #d4cfc4; border-radius: 8px; padding: 11px 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; background: #faf7f2; width: 100%; }
+input:focus, select:focus { outline: none; border-color: #c9a84c; }
+
+.srow { display: flex; gap: 10px; flex-wrap: wrap; }
+.sbtn { padding: 9px 22px; border-radius: 99px; border: 2px solid #d4cfc4; font-size: 14px; font-weight: 600; cursor: pointer; background: white; color: #888; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+.sbtn:hover { border-color: #c9a84c; color: #1a1a2e; }
+.sbtn.on { background: #1a1a2e; border-color: #1a1a2e; color: #c9a84c; }
+
+.samples { display: flex; flex-direction: column; gap: 12px; margin: 20px 0; }
+.sample { border: 1px solid #d4cfc4; border-radius: 10px; padding: 16px; background: #faf7f2; }
+.stoph { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+.stxt { font-size: 14px; line-height: 1.6; flex: 1; }
+.stag { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #888; flex-shrink: 0; }
+.lbtns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.lbtn { padding: 5px 12px; border-radius: 99px; border: 1.5px solid #d4cfc4; font-size: 12px; font-weight: 600; cursor: pointer; background: white; color: #888; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+.lbtn.easy { background: #fce4ec; border-color: #e53935; color: #b71c1c; }
+.lbtn.ok { background: #d4e6da; border-color: #4a7c59; color: #2e5a3a; }
+.lbtn.hard { background: #d0e4ef; border-color: #3a6b8a; color: #1a3d52; }
+
+.tip { background: #d0e4ef; border: 1px solid #3a6b8a; border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #1a3d52; margin-bottom: 16px; line-height: 1.6; }
+.note { background: #f0ebe0; border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #666; margin-bottom: 16px; display: none; }
+.note.show { display: block; }
+
+.dlbar { background: #1a1a2e; border-radius: 10px; padding: 18px 22px; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.dlbar-txt { color: white; font-size: 14px; }
+.dlbar-txt strong { color: #c9a84c; display: block; font-size: 16px; margin-bottom: 2px; }
+.dlbtns { display: flex; gap: 8px; }
+.dlbtn { padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; font-family: 'DM Sans', sans-serif; }
+.dlbtn-gold { background: #c9a84c; color: white; }
+.dlbtn-ghost { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.25) !important; }
+
+.tabs { display: flex; border-bottom: 1px solid #d4cfc4; margin-bottom: 20px; }
+.tbtn { padding: 10px 20px; font-size: 14px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; color: #888; background: none; border-top: none; border-left: none; border-right: none; font-family: 'DM Sans', sans-serif; }
+.tbtn.on { color: #1a1a2e; border-bottom-color: #c9a84c; }
+.tpanel { display: none; }
+.tpanel.show { display: block; }
+
+.out-section { border: 1px solid #d4cfc4; border-radius: 10px; overflow: hidden; }
+.out-ch { padding: 24px 28px; border-bottom: 1px solid #d4cfc4; }
+.out-ch:last-child { border-bottom: none; }
+.ch-lbl { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #c9a84c; margin-bottom: 6px; }
+.ch-ttl { font-family: 'Fraunces', serif; font-size: 20px; margin-bottom: 12px; }
+.ch-body { font-size: 14px; line-height: 1.8; color: #333; white-space: pre-wrap; }
+
+.guide { display: flex; flex-direction: column; gap: 12px; }
+.gi { border-left: 3px solid #c9a84c; padding: 14px 18px; background: #faf7f2; border-radius: 0 8px 8px 0; }
+.gi-lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #c9a84c; margin-bottom: 6px; }
+.gi-body { font-size: 14px; line-height: 1.7; color: #333; white-space: pre-wrap; }
+
+.brow { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; flex-wrap: wrap; }
+.btn { padding: 13px 26px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+.btn-d { background: #1a1a2e; color: #c9a84c; }
+.btn-d:hover { background: #2d2d4e; }
+.btn-d:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-o { background: white; color: #1a1a2e; border: 1.5px solid #d4cfc4 !important; }
+.btn-o:hover { border-color: #1a1a2e !important; }
+.btn-g { background: #c9a84c; color: white; }
+.btn-g:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.loading { display: none; position: fixed; inset: 0; background: rgba(26,26,46,0.65); z-index: 999; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
+.loading.show { display: flex; }
+.lbox { background: white; border-radius: 16px; padding: 40px; text-align: center; max-width: 340px; width: 90%; }
+.spin { width: 44px; height: 44px; border: 3px solid #d4cfc4; border-top-color: #c9a84c; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.lbox h3 { font-family: 'Fraunces', serif; font-size: 18px; margin-bottom: 8px; }
+.lbox p { font-size: 13px; color: #888; line-height: 1.5; }
+
+@media (max-width: 600px) {
+  .wrap { padding: 24px 14px 60px; }
+  .card { padding: 22px 16px; }
+  .row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="loading" id="loading">
+  <div class="lbox">
+    <div class="spin"></div>
+    <h3 id="ltitle">Processing…</h3>
+    <p id="lsub">Please wait.</p>
+  </div>
+</div>
+
+<header>
+  <div class="logo">Curriculum <span>Craft</span></div>
+  <div class="tagline">AI Textbook Generator for Teachers</div>
+</header>
+
+<div class="progress">
+  <div class="ps active" id="ps1"><span class="ps-num">1</span> Upload</div>
+  <div class="arr">›</div>
+  <div class="ps" id="ps2"><span class="ps-num">2</span> Class Info</div>
+  <div class="arr">›</div>
+  <div class="ps" id="ps3"><span class="ps-num">3</span> Student Level</div>
+  <div class="arr">›</div>
+  <div class="ps" id="ps4"><span class="ps-num">4</span> Textbook</div>
+</div>
+
+<div class="wrap">
+
+  <div class="card show" id="card1">
+    <h2>Upload Curriculum</h2>
+    <p class="desc">Upload your national curriculum file or paste the text below.</p>
+    <div class="dropzone" id="dz" onclick="document.getElementById('fi').click()">
+      <div class="icon">📄</div>
+      <p>Drop file here or click to browse</p>
+      <small>PDF · DOCX · TXT</small>
+    </div>
+    <input type="file" id="fi" accept=".pdf,.docx,.txt" style="display:none">
+    <div class="file-ok" id="fok"><span>✅</span><span id="fname"></span></div>
+    <div class="div">or paste text directly</div>
+    <textarea id="curtext" placeholder="Paste your curriculum content here…"></textarea>
+    <div class="brow">
+      <button class="btn btn-d" onclick="s1()">Next: Class Info →</button>
+    </div>
+  </div>
+
+  <div class="card" id="card2">
+    <h2>Class Information</h2>
+    <p class="desc">Help us tailor the textbook to your classroom.</p>
+    <div class="row">
+      <div class="field">
+        <label>Country</label>
+        <select id="country">
+          <option value="">Select…</option>
+          <option value="Philippines">Philippines</option>
+          <option value="Myanmar">Myanmar</option>
+          <option value="Thailand (Mae Sot)">Thailand (Mae Sot)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Language of Instruction</label>
+        <select id="lang">
+          <option value="">Select…</option>
+          <option value="English">English</option>
+          <option value="Filipino (Tagalog)">Filipino (Tagalog)</option>
+          <option value="Burmese">Burmese (မြန်မာဘာသာ)</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Grade / Year Level</label>
+        <input type="text" id="grade" placeholder="e.g. Grade 1">
+      </div>
+      <div class="field">
+        <label>Number of Lessons</label>
+        <input type="number" id="lessons" placeholder="e.g. 3" min="1" max="10">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Number of Students</label>
+        <input type="number" id="students" placeholder="e.g. 30" min="1">
+      </div>
+      <div class="field">
+        <label>Teaching Experience</label>
+        <select id="exp">
+          <option value="">Select…</option>
+          <option value="new">New (0–2 years)</option>
+          <option value="some">Some (3–5 years)</option>
+          <option value="experienced">Experienced (6+ years)</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Subject</label>
+      <div class="srow">
+        <button class="sbtn" onclick="pickS('Language',this)">📖 Language</button>
+        <button class="sbtn" onclick="pickS('Mathematics',this)">🔢 Mathematics</button>
+        <button class="sbtn" onclick="pickS('Science',this)">🔬 Science</button>
+      </div>
+      <input type="hidden" id="subject">
+    </div>
+    <div class="field">
+      <label>Additional context (optional)</label>
+      <textarea id="ctx" style="min-height:80px" placeholder="e.g. refugee students, limited devices…"></textarea>
+    </div>
+    <div class="brow">
+      <button class="btn btn-o" onclick="go(1)">← Back</button>
+      <button class="btn btn-d" onclick="s2()">Next: Student Level →</button>
+    </div>
+  </div>
+
+  <div class="card" id="card3">
+    <h2>Check Student Level</h2>
+    <p class="desc">Rate these 5 exercises to help us calibrate the difficulty.</p>
+    <div class="tip">💡 You know your students best. This helps us create a better textbook.</div>
+    <div class="samples" id="slist"></div>
+    <div class="note" id="note"></div>
+    <div class="brow">
+      <button class="btn btn-o" onclick="go(2)">← Back</button>
+      <button class="btn btn-g" id="genbtn" onclick="genTextbook()" disabled>✨ Generate Textbook</button>
+    </div>
+  </div>
+
+  <div class="card" id="card4">
+    <div class="dlbar">
+      <div class="dlbar-txt">
+        <strong id="tbtitle">Your Textbook</strong>
+        Ready to use in your classroom
+      </div>
+      <div class="dlbtns">
+        <button class="dlbtn dlbtn-ghost" onclick="dlHTML()">⬇ Download</button>
+        <button class="dlbtn dlbtn-gold" onclick="window.print()">🖨 Print</button>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tbtn on" onclick="tab('tb',this)">📖 Textbook</button>
+      <button class="tbtn" onclick="tab('guide',this)">🎓 Teaching Guide</button>
+    </div>
+    <div class="tpanel show" id="tab-tb"><div class="out-section" id="tbout"></div></div>
+    <div class="tpanel" id="tab-guide"><div class="guide" id="guideout"></div></div>
+    <div class="brow" style="margin-top:28px">
+      <button class="btn btn-o" onclick="go(1)">← Start Over</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+let cur = '', subj = '', smps = [], lvls = {};
+
+// File upload
+const dz = document.getElementById('dz');
+const fi = document.getElementById('fi');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.borderColor='#c9a84c'; });
+dz.addEventListener('dragleave', () => dz.style.borderColor='#d4cfc4');
+dz.addEventListener('drop', e => { e.preventDefault(); dz.style.borderColor='#d4cfc4'; if(e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]); });
+fi.addEventListener('change', e => { if(e.target.files[0]) readFile(e.target.files[0]); });
+
+async function readFile(f) {
+  showL('Reading file…','Extracting text from your document.');
+  try {
+    let txt = '';
+    if (f.name.endsWith('.txt') || f.type==='text/plain') {
+      txt = await f.text();
+    } else if (f.name.endsWith('.docx')) {
+      const r = await mammoth.extractRawText({arrayBuffer: await f.arrayBuffer()});
+      txt = r.value;
+    } else if (f.name.endsWith('.pdf') || f.type==='application/pdf') {
+      const pdf = await pdfjsLib.getDocument({data: await f.arrayBuffer()}).promise;
+      for (let i=1; i<=Math.min(pdf.numPages,100); i++) {
+        const pg = await pdf.getPage(i);
+        const ct = await pg.getTextContent();
+        txt += ct.items.map(s=>s.str).join(' ')+'\n';
+      }
+    }
+    if (txt.trim()) {
+      cur = txt;
+      document.getElementById('curtext').value = txt.slice(0,2000)+(txt.length>2000?'\n…(truncated)':'');
+      document.getElementById('fname').textContent = f.name;
+      document.getElementById('fok').classList.add('show');
+    }
+  } catch(e) { alert('Could not read file. Please paste the text directly.'); }
+  hideL();
+}
+
+// Navigation
+function go(n) {
+  for(let i=1;i<=4;i++){
+    document.getElementById('card'+i).classList.toggle('show',i===n);
+    const p=document.getElementById('ps'+i);
+    p.classList.remove('active','done');
+    if(i===n) p.classList.add('active');
+    if(i<n) p.classList.add('done');
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function s1() {
+  const t = document.getElementById('curtext').value.trim();
+  if(!t && !cur) { alert('Please upload a file or paste curriculum text first.'); return; }
+  if(t) cur = t;
+  go(2);
+}
+
+function pickS(name, btn) {
+  subj = name;
+  document.getElementById('subject').value = name;
+  document.querySelectorAll('.sbtn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+async function s2() {
+  if(!document.getElementById('country').value) { alert('Please select a country.'); return; }
+  if(!document.getElementById('grade').value.trim()) { alert('Please enter a grade level.'); return; }
+  if(!subj) { alert('Please select a subject.'); return; }
+  go(3);
+  await buildSamples();
+}
+
+// Loading
+function showL(t,s) { document.getElementById('ltitle').textContent=t; document.getElementById('lsub').textContent=s; document.getElementById('loading').classList.add('show'); }
+function hideL() { document.getElementById('loading').classList.remove('show'); }
+
+async function callClaude(prompt, maxTokens) {
+  const res = await fetch('/api/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-3-haiku-20240307',
+      max_tokens: maxTokens || 1000,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+  if (!res.ok) throw new Error('API error ' + res.status);
+  const data = await res.json();
+  return data.content.find(b => b.type === 'text').text;
+}
+
+function parseJ(raw) {
+  const c = raw.replace(/```json/g,'').replace(/```/g,'').trim();
+  const a = c.match(/\[[\s\S]*\]/); if(a) return JSON.parse(a[0]);
+  const o = c.match(/\{[\s\S]*\}/); if(o) return JSON.parse(o[0]);
+  return JSON.parse(c);
+}
+
+// Samples
+async function buildSamples() {
+  smps=[]; lvls={};
+  document.getElementById('genbtn').disabled=true;
+  document.getElementById('note').classList.remove('show');
+  document.getElementById('slist').innerHTML='<div style="padding:32px;text-align:center;color:#888">Generating exercises…</div>';
+  const grade=document.getElementById('grade').value;
+  const lang=document.getElementById('lang').value||'English';
+  try {
+    showL('Generating exercises…','Analyzing your curriculum.');
+    const raw = await callClaude(
+      'Generate 5 practice exercises for '+grade+' '+subj+' students in '+lang+'. Base them ONLY on this curriculum content: '+cur.slice(0,1500)+'\n\nReturn ONLY a JSON array, no other text:\n[{"id":1,"text":"exercise","difficulty":"basic"},{"id":2,"text":"exercise","difficulty":"basic"},{"id":3,"text":"exercise","difficulty":"intermediate"},{"id":4,"text":"exercise","difficulty":"intermediate"},{"id":5,"text":"exercise","difficulty":"challenging"}]',
+      800
+    );
+    hideL();
+    smps = parseJ(raw);
+  } catch(e) {
+    hideL();
+    smps = fallback();
+  }
+  renderS();
+}
+
+function fallback() {
+  if(subj==='Mathematics') return [
+    {id:1,text:'Write numbers 1 to 10 in order.',difficulty:'basic'},
+    {id:2,text:'Solve: 4 + 3 = ?',difficulty:'basic'},
+    {id:3,text:'A farmer has 10 eggs and sells 4. How many are left?',difficulty:'intermediate'},
+    {id:4,text:'Fill in the blank: 6 + __ = 11',difficulty:'intermediate'},
+    {id:5,text:'Maria has 20 mangoes and gives half to her friend. How many does she have now?',difficulty:'challenging'}
+  ];
+  if(subj==='Science') return [
+    {id:1,text:'Name two things plants need to grow.',difficulty:'basic'},
+    {id:2,text:'Is a stone living or non-living? Why?',difficulty:'basic'},
+    {id:3,text:'What happens to water when it is heated?',difficulty:'intermediate'},
+    {id:4,text:'Why should we wash our hands before eating?',difficulty:'intermediate'},
+    {id:5,text:'Explain how plants make food from sunlight in 2–3 sentences.',difficulty:'challenging'}
+  ];
+  return [
+    {id:1,text:'Read aloud: "The sun rises every morning."',difficulty:'basic'},
+    {id:2,text:'Write 3 words that start with the letter B.',difficulty:'basic'},
+    {id:3,text:'Write one sentence about your family.',difficulty:'intermediate'},
+    {id:4,text:'"The girl ran to school because she was late." Why did she run?',difficulty:'intermediate'},
+    {id:5,text:'Write 3–4 sentences about something you did yesterday.',difficulty:'challenging'}
+  ];
+}
+
+function renderS() {
+  const lbl={basic:'Basic',intermediate:'Intermediate',challenging:'Challenging'};
+  document.getElementById('slist').innerHTML = smps.map((s,i)=>`
+    <div class="sample" id="s${s.id}">
+      <div class="stoph">
+        <div class="stxt"><strong>${i+1}.</strong> ${s.text}</div>
+        <div class="stag">${lbl[s.difficulty]||s.difficulty}</div>
+      </div>
+      <div style="font-size:12px;color:#888;margin-bottom:6px">How would most of your students handle this?</div>
+      <div class="lbtns">
+        <button class="lbtn" onclick="setL(${s.id},'easy',this)">😊 Too easy</button>
+        <button class="lbtn" onclick="setL(${s.id},'ok',this)">✅ About right</button>
+        <button class="lbtn" onclick="setL(${s.id},'hard',this)">😓 Too hard</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function setL(id,v,btn) {
+  document.getElementById('s'+id).querySelectorAll('.lbtn').forEach(b=>b.className='lbtn');
+  btn.classList.add(v);
+  lvls[id]=v;
+  const ans=Object.keys(lvls).length, hard=Object.values(lvls).filter(x=>x==='hard').length, easy=Object.values(lvls).filter(x=>x==='easy').length;
+  const n=document.getElementById('note');
+  const msg = hard>=3?'📊 Students need more support — we\'ll simplify and add more scaffolding.'
+            : easy>=3?'📊 Students are ahead — we\'ll add enrichment activities.'
+            :'📊 Good balance! We\'ll pitch the textbook at the right level.';
+  n.textContent=ans+'/'+smps.length+' assessed. '+msg;
+  n.classList.add('show');
+  if(ans>=smps.length) document.getElementById('genbtn').disabled=false;
+}
+
+// Generate textbook
+async function genTextbook() {
+  const country=document.getElementById('country').value;
+  const grade=document.getElementById('grade').value;
+  const lang=document.getElementById('lang').value||'English';
+  const lessons=Math.min(parseInt(document.getElementById('lessons').value)||1,5);
+  const students=document.getElementById('students').value;
+  const exp=document.getElementById('exp').value;
+  const ctx=document.getElementById('ctx').value;
+  const hard=Object.values(lvls).filter(x=>x==='hard').length;
+  const easy=Object.values(lvls).filter(x=>x==='easy').length;
+  const level=hard>=3?'below level, simplify and scaffold':easy>=3?'above level, add enrichment':'at level';
+  const snippet=cur.slice(0,1200);
+  const chapSpec=Array.from({length:lessons},(_,i)=>`{"label":"Lesson ${i+1}","title":"[title]","body":"[content]"}`).join(',');
+  const prompt='Create a school textbook as pure JSON only. No markdown. Context: '+grade+' '+subj+' | Country:'+country+' | Language:'+lang+' | Level:'+level+' | Teacher:'+exp+' | Students:'+students+' | Notes:'+ctx+'\n\nCurriculum:\n'+snippet+'\n\nReturn JSON with '+lessons+' lessons:\n{"title":"[title]","chapters":['+chapSpec+'],"guide":[{"title":"Learning Objectives","body":"..."},{"title":"Teaching Methods","body":"..."},{"title":"Lesson Flow","body":"..."},{"title":"Assessment","body":"..."},{"title":"Common Mistakes","body":"..."}]}';
+  try {
+    showL('Generating your textbook…','This takes about 20–40 seconds. Please wait.');
+    const raw = await callClaude(prompt, 3000);
+    hideL();
+    const data = parseJ(raw);
+    if(!data.chapters||data.chapters.length===0) throw new Error('No content generated');
+    renderOut(data);
+    go(4);
+  } catch(e) {
+    hideL();
+    alert('Could not generate textbook. Please try again.\n\nError: '+e.message);
+  }
+}
+
+function renderOut(d) {
+  document.getElementById('tbtitle').textContent=d.title||'Your Textbook';
+  document.getElementById('tbout').innerHTML=(d.chapters||[]).map(c=>`
+    <div class="out-ch">
+      <div class="ch-lbl">${c.label||''}</div>
+      <div class="ch-ttl">${c.title||''}</div>
+      <div class="ch-body">${c.body||''}</div>
+    </div>
+  `).join('');
+  document.getElementById('guideout').innerHTML=(d.guide||d.teachingGuide||[]).map(g=>`
+    <div class="gi">
+      <div class="gi-lbl">${g.title||''}</div>
+      <div class="gi-body">${g.body||''}</div>
+    </div>
+  `).join('');
+  window._d=d;
+}
+
+function tab(id,btn) {
+  document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.tpanel').forEach(p=>p.classList.remove('show'));
+  btn.classList.add('on');
+  document.getElementById('tab-'+id).classList.add('show');
+}
+
+function dlHTML() {
+  const d=window._d; if(!d) return;
+  const h='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+d.title+'</title><style>body{font-family:Georgia,serif;max-width:760px;margin:40px auto;padding:0 20px;line-height:1.8;color:#222}h1{font-size:28px}h2{font-size:20px;margin:28px 0 10px}h3{font-size:12px;color:#c9a84c;text-transform:uppercase;letter-spacing:1px;margin:20px 0 6px}.ch{border-bottom:1px solid #eee;padding-bottom:24px;margin-bottom:24px}.g{border-left:3px solid #c9a84c;padding:12px 16px;margin-bottom:12px;background:#faf7f2}p{margin-bottom:10px}</style></head><body><h1>'+d.title+'</h1>'+(d.chapters||[]).map(c=>'<div class="ch"><h3>'+c.label+'</h3><h2>'+c.title+'</h2>'+c.body.split('\n').map(l=>'<p>'+l+'</p>').join('')+'</div>').join('')+'<h1>Teaching Guide</h1>'+(d.guide||d.teachingGuide||[]).map(g=>'<div class="g"><h3>'+g.title+'</h3>'+g.body.split('\n').map(l=>'<p>'+l+'</p>').join('')+'</div>').join('')+'</body></html>';
+  const a=document.createElement('a');
+  a.href='data:text/html;charset=utf-8,'+encodeURIComponent(h);
+  a.download=(d.title||'textbook').replace(/\s+/g,'-')+'.html';
+  a.click();
+}
+</script>
+</body>
+</html>
