@@ -469,7 +469,7 @@ async function genTextbook() {
   const prompt='Create a school textbook as pure JSON only. No markdown. Context: '+grade+' '+subj+' | Country:'+country+' | Language:'+lang+' | Level:'+level+' | Teacher:'+exp+' | Students:'+students+' | Notes:'+ctx+'\n\nCurriculum:\n'+snippet+'\n\nReturn JSON with '+lessons+' lessons:\n{"title":"[title]","chapters":['+chapSpec+'],"guide":[{"title":"Learning Objectives","body":"..."},{"title":"Teaching Methods","body":"..."},{"title":"Lesson Flow","body":"..."},{"title":"Assessment","body":"..."},{"title":"Common Mistakes","body":"..."}]}';
   try {
     showL('Generating your textbook…','This takes about 20–40 seconds. Please wait.');
-    const raw = await callClaude(prompt, 3000);
+    const raw = await callClaude(prompt, 8000);
     hideL();
     const data = parseJ(raw);
     if(!data.chapters||data.chapters.length===0) throw new Error('No content generated');
